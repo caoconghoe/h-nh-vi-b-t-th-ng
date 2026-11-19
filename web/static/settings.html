@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cài đặt · Giám sát hành vi</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect x=%272%27 y=%276%27 width=%2728%27 height=%2720%27 rx=%274%27 fill=%27%23dc2626%27/%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%276%27 fill=%27white%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Giám sát hành vi</div>
+  <nav>
+    <a href="/">Giám sát</a>
+    <a href="/history">Lịch sử</a>
+    <a href="/settings" class="active">Cài đặt</a>
+  </nav>
+  <button id="soundBtn" class="btn ghost" type="button" title="Bật/tắt tiếng bíp khi báo động">🔇 Âm thanh: tắt</button>
+</header>
+
+<main class="page settings">
+  <section class="card">
+    <h2>Trạng thái nguồn trực tiếp</h2>
+    <div class="state-line"><span id="srcStatus" class="status-dot">Đang tải...</span></div>
+    <dl class="stats compact">
+      <dt>Nguồn</dt><dd id="stSource">—</dd>
+      <dt>Khung/giây</dt><dd id="stFps">—</dd>
+      <dt>Thời gian suy luận</dt><dd id="stInfer">—</dd>
+    </dl>
+    <p class="muted small">Chọn và bật camera laptop / điện thoại ở trang <a href="/">Giám sát</a>.</p>
+  </section>
+
+  <form id="form" class="settings-grid" autocomplete="off">
+    <section class="card">
+      <h2>Báo động (mọi nguồn)</h2>
+      <div class="field">
+        <label for="thr">Ngưỡng tin cậy (THR): <b id="thrVal"></b></label>
+        <input type="range" id="thr" min="0.3" max="0.99" step="0.01">
+        <small class="muted">Chỉ báo động khi nhãn khác “Bình thường” có độ tin cậy ≥ ngưỡng. Cao hơn = ít báo nhầm, dễ bỏ sót.</small>
+      </div>
+      <div class="field">
+        <label for="k">Số cửa sổ liên tiếp (K)</label>
+        <input type="number" id="k" min="1" max="10" step="1">
+        <small class="muted">Cần K lần phân tích liên tiếp cùng nhãn mới báo. K lớn = chắc hơn nhưng báo chậm hơn.</small>
+      </div>
+      <p class="muted small">THR và K mới áp dụng ngay cho camera và video đang phát; sự kiện đã lưu trong Lịch sử giữ nguyên.</p>
+
+      <h2 style="margin-top:18px">Ngưỡng và K riêng theo nhãn</h2>
+      <p class="muted small">Để trống = dùng THR/K chung ở trên. Ví dụ hạ ngưỡng TÉ NGÃ để nhạy hơn, hoặc tăng K của ĐÁNH NHAU để bớt báo nhầm.</p>
+      <table class="per-label">
+        <thead><tr><th>Nhãn</th><th>Ngưỡng</th><th>K</th><th>Đang áp dụng</th></tr></thead>
+        <tbody id="perLabel"></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Trực tiếp</h2>
+      <div class="field">
+        <label for="step">Chu kỳ suy luận (giây)</label>
+        <input type="number" id="step" min="0.5" max="10" step="0.5">
+        <small class="muted" id="stepHint">Mỗi bao nhiêu giây lấy 3 giây gần nhất để phân tích.</small>
+      </div>
+      <div class="field">
+        <label for="cooldown">Thời gian chờ chống lặp (giây)</label>
+        <input type="number" id="cooldown" min="0" max="3600" step="1">
+        <small class="muted">Không phát lại thông báo/tiếng bíp cho cùng một nhãn trong khoảng này.</small>
+      </div>
+      <p class="muted small" id="delayHint"></p>
+      <h2 style="margin-top:18px">Video tải lên</h2>
+      <div class="field">
+        <label for="videoStep">Bước giữa các cửa sổ (giây)</label>
+        <input type="number" id="videoStep" min="0.25" max="5" step="0.25">
+        <small class="muted">Nhỏ hơn = mịn hơn nhưng phân tích lâu hơn (mỗi cửa sổ ~1–3 giây xử lý trên CPU).</small>
+      </div>
+    </section>
+
+    <div class="save-bar">
+      <span id="saveMsg" class="muted"></span>
+      <button type="button" id="resetBtn" class="btn ghost">Hoàn tác</button>
+      <button type="submit" id="saveBtn" class="btn">Lưu và áp dụng</button>
+    </div>
+  </form>
+</main>
+
+<div id="toasts" class="toasts" aria-live="assertive"></div>
+<script src="/static/common.js"></script>
+<script src="/static/settings.js"></script>
+</body>
+</html>

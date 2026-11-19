@@ -1,0 +1,18 @@
+# Môi trường Python (tự cài lại theo README)
+venv/
+__pycache__/
+*.pyc
+
+# Trọng số model: 329 MB, vượt giới hạn 100 MB/file của GitHub -> tự đặt vào best_model_v3/
+best_model_v3/model.safetensors
+
+# Dữ liệu cục bộ, riêng tư: CSDL, ảnh chụp camera, video tải lên, nhật ký
+web/data/
+
+# Video thử / kết quả và khung kiểm tra chiều
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.m4v
+check_frame.jpg

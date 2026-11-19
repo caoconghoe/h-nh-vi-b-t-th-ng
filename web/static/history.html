@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lịch sử · Giám sát hành vi</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect x=%272%27 y=%276%27 width=%2728%27 height=%2720%27 rx=%274%27 fill=%27%23dc2626%27/%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%276%27 fill=%27white%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Giám sát hành vi</div>
+  <nav>
+    <a href="/">Giám sát</a>
+    <a href="/history" class="active">Lịch sử</a>
+    <a href="/settings">Cài đặt</a>
+  </nav>
+  <button id="soundBtn" class="btn ghost" type="button" title="Bật/tắt tiếng bíp khi báo động">🔇 Âm thanh: tắt</button>
+</header>
+
+<main class="page">
+  <form id="filters" class="card filters">
+    <label>Nhãn
+      <select name="label" id="fLabel"><option value="">Tất cả</option></select>
+    </label>
+    <label>Nguồn
+      <select name="source_type" id="fSource">
+        <option value="">Tất cả</option>
+        <option value="laptop">Camera laptop</option>
+        <option value="phone">Camera điện thoại</option>
+        <option value="video">Video tải lên</option>
+      </select>
+    </label>
+    <label>Từ ngày <input type="date" name="date_from" id="fFrom"></label>
+    <label>Đến ngày <input type="date" name="date_to" id="fTo"></label>
+    <label>Trạng thái
+      <select name="fp" id="fFp">
+        <option value="">Tất cả</option>
+        <option value="0">Chưa đánh dấu</option>
+        <option value="1">Báo nhầm</option>
+      </select>
+    </label>
+    <div class="filter-actions">
+      <button type="button" id="resetBtn" class="btn ghost">Bỏ lọc</button>
+      <button type="button" id="deleteAllBtn" class="btn danger">Xóa tất cả</button>
+    </div>
+  </form>
+
+  <div class="card">
+    <div class="table-head">
+      <span id="count" class="muted">Đang tải...</span>
+    </div>
+    <div class="table-scroll">
+      <table class="events">
+        <thead>
+          <tr><th>Ảnh</th><th>Thời gian</th><th>Nhãn</th><th>Tin cậy</th><th>Nguồn</th><th>Trạng thái</th><th></th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <button type="button" id="prevBtn" class="btn ghost">‹ Trước</button>
+      <span id="pageInfo" class="muted"></span>
+      <button type="button" id="nextBtn" class="btn ghost">Sau ›</button>
+    </div>
+  </div>
+</main>
+
+<dialog id="viewer" class="viewer">
+  <div class="viewer-body">
+    <img id="vImg" alt="Ảnh chụp sự kiện">
+    <div class="viewer-info">
+      <h3 id="vTitle"></h3>
+      <dl class="stats" id="vStats"></dl>
+      <h2 style="margin-top:16px">Xác suất tại cửa sổ tin cậy cao nhất</h2>
+      <div id="vProbs" class="probs"></div>
+      <div class="viewer-actions">
+        <a id="vReplay" class="btn" hidden>▶ Xem lại đoạn này</a>
+        <button type="button" id="vFp" class="btn ghost"></button>
+        <button type="button" id="vDel" class="btn danger">Xóa</button>
+        <button type="button" id="vClose" class="btn">Đóng</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="askDel" class="ask">
+  <form method="dialog">
+    <h3>Xóa sự kiện từ video tải lên</h3>
+    <p>Sự kiện này thuộc video <b id="delName"></b>. Bạn muốn xóa thế nào?</p>
+    <div class="ask-btns">
+      <button value="event" class="btn">Chỉ xóa sự kiện này<small>Giữ file video để còn xem lại các đoạn khác</small></button>
+      <button value="video" class="btn danger">Xóa cả video<small>Xóa file video và MỌI sự kiện của video đó</small></button>
+      <button value="cancel" class="btn ghost">Hủy</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toasts" class="toasts" aria-live="assertive"></div>
+<script src="/static/common.js"></script>
+<script src="/static/history.js"></script>
+</body>
+</html>

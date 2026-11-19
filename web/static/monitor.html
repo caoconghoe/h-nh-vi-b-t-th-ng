@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Giám sát hành vi</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect x=%272%27 y=%276%27 width=%2728%27 height=%2720%27 rx=%274%27 fill=%27%23dc2626%27/%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%276%27 fill=%27white%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Giám sát hành vi</div>
+  <nav>
+    <a href="/" class="active">Giám sát</a>
+    <a href="/history">Lịch sử</a>
+    <a href="/settings">Cài đặt</a>
+  </nav>
+  <button id="soundBtn" class="btn ghost" type="button" title="Bật/tắt tiếng bíp khi báo động">🔇 Âm thanh: tắt</button>
+</header>
+
+<main class="monitor">
+  <section class="main-col">
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="laptop" id="tab-laptop">Camera laptop<span class="live-dot" hidden></span></button>
+      <button type="button" role="tab" data-tab="phone" id="tab-phone">Camera điện thoại<span class="live-dot" hidden></span></button>
+      <button type="button" role="tab" data-tab="video" id="tab-video">Tải video</button>
+    </div>
+
+    <!-- MỘT khung hình lớn dùng chung cho cả 3 nguồn; viền đỏ + nhãn do server vẽ lên khung -->
+    <div id="frameWrap" class="frame-wrap">
+      <img id="frame" alt="Khung hình nguồn đang chọn">
+      <div id="placeholder" class="frame-msg">
+        <b id="phTitle">Chưa có hình</b>
+        <span id="phSub"></span>
+        <button type="button" id="phPick" class="btn" hidden>Chọn file video</button>
+      </div>
+      <div id="progressBox" class="frame-progress" hidden>
+        <b id="progTitle">Đang phân tích...</b>
+        <div class="bar big"><span id="progBar"></span></div>
+        <span id="progText"></span>
+        <button type="button" id="progCancel" class="btn ghost light">Hủy</button>
+      </div>
+      <div id="dropHint" class="drop-hint" hidden>Thả video vào đây</div>
+    </div>
+
+    <!-- điều khiển theo tab -->
+    <div class="card controls" data-panel="laptop">
+      <div class="ctrl-row">
+        <label class="inline-field">Số camera <input type="number" id="laptopIndex" min="0" max="20" step="1" value="0"></label>
+        <button type="button" class="btn" id="laptopStart">Bật camera</button>
+        <button type="button" class="btn ghost" id="laptopStop">Dừng</button>
+        <span class="muted small">Webcam gắn trên máy thường là số 0.</span>
+      </div>
+    </div>
+
+    <div class="card controls" data-panel="phone" hidden>
+      <div class="ctrl-row">
+        <div class="segmented" role="radiogroup" aria-label="Cách kết nối">
+          <label><input type="radio" name="phoneMode" value="url"><span>DroidCam qua Wi-Fi</span></label>
+          <label><input type="radio" name="phoneMode" value="virtual"><span>Camera ảo DroidCam Client</span></label>
+        </div>
+      </div>
+      <div class="ctrl-row" data-mode="url">
+        <label class="inline-field">IP điện thoại <input type="text" id="phoneIp" placeholder="192.168.1.5" inputmode="decimal" class="ip"></label>
+        <label class="inline-field">Cổng <input type="number" id="phonePort" value="4747" min="1" max="65535" class="port"></label>
+        <span class="muted small">URL: <code id="urlPreview">—</code> (tự thử /mjpegfeed nếu không được)</span>
+      </div>
+      <div class="ctrl-row" data-mode="virtual" hidden>
+        <label class="inline-field">Số camera ảo <input type="number" id="phoneIndex" min="0" max="20" step="1" value="1"></label>
+        <span class="muted small">Sau khi DroidCam Client trên Windows đã kết nối; thường là 1 hoặc 2.</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="muted small">Xoay</span>
+        <div class="segmented" role="radiogroup" aria-label="Xoay khung hình">
+          <label><input type="radio" name="phoneRotate" value="0"><span>0°</span></label>
+          <label><input type="radio" name="phoneRotate" value="90"><span>90°</span></label>
+          <label><input type="radio" name="phoneRotate" value="180"><span>180°</span></label>
+          <label><input type="radio" name="phoneRotate" value="270"><span>270°</span></label>
+        </div>
+        <button type="button" class="btn ghost" id="phoneTest">Kiểm tra kết nối</button>
+        <button type="button" class="btn" id="phoneStart">Bật camera điện thoại</button>
+        <button type="button" class="btn ghost" id="phoneStop">Dừng</button>
+      </div>
+      <div id="testResult" class="test-result" hidden>
+        <img id="testImg" alt="Ảnh xem trước từ điện thoại" hidden>
+        <p id="testMsg"></p>
+      </div>
+    </div>
+
+    <div class="card controls" data-panel="video" hidden>
+      <div class="ctrl-row">
+        <button type="button" class="btn ghost" id="pickBtn">Chọn file video</button>
+        <input type="file" id="fileInput" accept=".mp4,.mov,.avi,.mkv,.m4v,video/*" hidden>
+        <button type="button" class="btn" id="playBtn" disabled>▶ Phát</button>
+        <button type="button" class="btn ghost" id="restartBtn" disabled>⟲ Phát lại từ đầu</button>
+        <span id="timeText" class="time-text">0:00 / 0:00</span>
+        <button type="button" class="btn ghost" id="closeBtn" disabled>Đóng video</button>
+      </div>
+      <div id="rtStatus" class="rt-status muted small"></div>
+      <div class="seek-wrap">
+        <div id="seek" class="seek" title="Bấm để phát từ thời điểm này">
+          <div id="seekSegs"></div>
+          <div id="seekCursor" class="seek-cursor"></div>
+        </div>
+        <div id="seekAxis" class="seek-axis"></div>
+      </div>
+      <div id="legend" class="legend"></div>
+    </div>
+
+    <!-- Xác suất theo thời gian (camera + video): số liệu của phiên, xóa được để đo lại -->
+    <section class="card probs-card" id="probsCard">
+      <div class="pc-head">
+        <h2>Xác suất theo thời gian <span id="pcSource" class="muted"></span></h2>
+        <div class="pc-actions">
+          <span id="pcCount" class="muted small"></span>
+          <div class="segmented sm" role="radiogroup" aria-label="Kiểu hiển thị">
+            <label><input type="radio" name="pcView" value="chart" checked><span>Biểu đồ</span></label>
+            <label><input type="radio" name="pcView" value="table"><span>Bảng</span></label>
+          </div>
+          <button type="button" class="btn ghost sm" id="pcReset">Xóa số liệu phiên</button>
+        </div>
+      </div>
+      <div id="pcMax" class="pc-max"></div>
+      <div id="pcChartWrap" class="pc-chart-wrap">
+        <svg id="pcChart" role="img"></svg>
+        <div id="pcTip" class="pc-tip" hidden></div>
+      </div>
+      <div id="pcLegend" class="legend"></div>
+      <div id="pcTableWrap" class="table-scroll pc-table" hidden>
+        <table class="events"><thead id="pcHead"></thead><tbody id="pcBody"></tbody></table>
+      </div>
+      <p id="pcEmpty" class="muted small"></p>
+    </section>
+  </section>
+
+  <aside class="side">
+    <div class="card">
+      <h2>Trạng thái</h2>
+      <div><span id="srcStatus" class="status-dot">Đang kết nối...</span></div>
+      <dl class="stats">
+        <dt>Nguồn trực tiếp</dt><dd id="stSource">—</dd>
+        <dt>Khung/giây</dt><dd id="stFps">—</dd>
+        <dt>Suy luận</dt><dd id="stInfer">—</dd>
+        <dt>Chu kỳ</dt><dd id="stPeriod">—</dd>
+      </dl>
+    </div>
+    <div class="card">
+      <h2>Kết quả hiện tại</h2>
+      <div id="probs" class="probs"></div>
+    </div>
+    <div class="card" data-side="video" hidden>
+      <h2>Đoạn báo động trong video</h2>
+      <p id="vInfo" class="muted small"></p>
+      <ul id="vSegs" class="recent"><li class="muted">Chưa chọn video.</li></ul>
+      <dl class="stats" id="vStats"></dl>
+    </div>
+    <div class="card" data-side="video" hidden>
+      <h2>Video đã tải lên</h2>
+      <ul id="vList" class="vlist"><li class="muted">Chưa có video.</li></ul>
+    </div>
+    <div class="card">
+      <h2>Cảnh báo gần đây</h2>
+      <ul id="recent" class="recent"><li class="muted">Chưa có cảnh báo.</li></ul>
+    </div>
+  </aside>
+</main>
+
+<dialog id="askLive" class="ask">
+  <form method="dialog">
+    <h3>Camera đang chạy</h3>
+    <p>Nguồn <b id="askSrc"></b> đang được phân tích trực tiếp. Video sẽ được phân tích <b>đồng thời khi phát</b>,
+       dùng chung model, nên hai việc không suy luận cùng lúc. Bạn muốn làm gì?</p>
+    <div class="ask-btns">
+      <button value="pause" class="btn">Dừng camera trong lúc phát video<small>Phân tích video nhanh nhất · camera tự bật lại khi hết video hoặc đóng video</small></button>
+      <button value="share" class="btn ghost">Xếp hàng chờ, chạy xen kẽ với camera<small>Hai bên lần lượt dùng model · cả hai chậm hơn, có thể phải bỏ bớt cửa sổ</small></button>
+      <button value="cancel" class="btn ghost">Hủy</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toasts" class="toasts" aria-live="assertive"></div>
+<script src="/static/common.js"></script>
+<script src="/static/probs_panel.js"></script>
+<script src="/static/monitor.js"></script>
+</body>
+</html>
